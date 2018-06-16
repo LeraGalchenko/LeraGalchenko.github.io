@@ -207,7 +207,7 @@
 							.attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
 						let ordinalScale = d3.scale.ordinal() 
 							.domain(countriesForFilter) 
-							.range(['violet', 'blue', 'green', 'orange', 'pink']); 
+							.range(['red', 'blue', 'green', 'orange', 'pink']); 
 						let rects = groups.append("rect")
 							.attr("height", barHeight - 3)
 							.attr('x', 10)
