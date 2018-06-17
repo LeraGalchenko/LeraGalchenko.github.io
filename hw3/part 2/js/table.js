@@ -116,13 +116,9 @@ class Table {
 
         // Clicking on headers should also trigger collapseList() and updateTable().
 
-
-
-
-
-
 	   d3.select('#Wins')
 	   .on('click', d => {
+	   	   this.collapseList();
            this.sort_enabled = true;
 		   if (this.header == 0) {
 			   this.cnt++;
@@ -136,6 +132,7 @@ class Table {
 	   });
 	   d3.select('#Losses')
 	   .on('click', d => {
+	   	   this.collapseList();
            this.sort_enabled = true;
 		   if (this.header == 2) {
 			   this.cnt++;
@@ -150,6 +147,7 @@ class Table {
 
 	   d3.select('#Goals')
 	   .on('click', d => {
+	   	   this.collapseList();
            this.sort_enabled = true;
 		   if (this.header == 3) {
 			   this.cnt++;
@@ -163,12 +161,24 @@ class Table {
 	   });
 
 
+	   d3.select('#RoundResult')
+	   .on('click', d => {
+	   	   this.collapseList();
+           this.sort_enabled = true;
+		   if (this.header == 5) {
+			   this.cnt++;
+		   }
+		   else {
+			   this.cnt = 0;
+		   }
+			this.header = 5;
+			this.updateTable();
 
-
-
+	   });
 
 	   d3.select('#team')
 	   .on('click', d => {
+	   	   this.collapseList();
            this.sort_enabled = true;
 		   if (this.header == 4) {
 			   this.cnt++;
@@ -183,6 +193,7 @@ class Table {
 
 	   d3.select('#TotalGames')
 	   .on('click', d => {
+	   	   this.collapseList();
            this.sort_enabled = true;
 		   if (this.header == 1) {
 			   this.cnt++;
@@ -192,14 +203,7 @@ class Table {
 		   }
 			this.header = 1;
 			this.updateTable();
-
-
-
 	   });
-
-
-	   //console.log(this.header);
-	   //console.log(this.cnt);
 
 	   function sorting(hdr) {
 			if (hdr == '') {
@@ -208,17 +212,6 @@ class Table {
 
 
 	   }
-
-
-
-
-
-
-
-
-
-
-
     }
 
 
@@ -252,37 +245,19 @@ class Table {
 
 		var maxOverall = d3.max([maxWins, maxLosses, maxTotalGames]);
 
-
-		//console.log(maxOverall);
-
 		var rows = d3.select('#matchTable > tbody').selectAll("tr");
 
 		rows.remove();
-
-
-
-
-
+		var t = this;
         var rows = rows
   				.data(this.tableElements, d => d)
   				.enter()
   				.append("tr")
                 .on('click', (d) => {
-                    if (this.sort_enabled) {
-                        return true;
-                    }
-
-                    if (d.value.type == 'game') {
-                        this.tree.updateTree(d);
-
-                    }
-
                     if (d.value.type == 'aggregate') {
-
+                    	this.collapseList()
                         for (var i = 0; i < this.tableElements.length; i++) {
                             if (d.key === this.tableElements[i]['key']) {
-
-
                                 this.updateList(i);
                                 this.selected = d.key;
                                 this.tree.updateTree(d)
@@ -291,9 +266,12 @@ class Table {
                         }
                     }
                 })
+                .on('mouseover', function (row) {
+                	if (row.value.type == 'aggregate'){
+			            t.tree.updateTree(row);
+			        }
+		        })
   				.attr('title', function(d) {
-
-
 					if (d.value.TotalGames == 3) {
 
 						var draws = d.value.TotalGames - d.value.Wins - d.value.Losses;
@@ -316,39 +294,35 @@ class Table {
 					}
 
 					return "Total Score: " + points;
-
-
 				})
 
 
 		if (this.header != null && with_sort) {
-            this.strange_sort = 1;
+			console.log(with_sort);
 			this.collapseList();
 
-			var sort_arr = ["Wins", 'TotalGames', 'Losses', 'Goals Made', 'key']
-			var tmp = sort_arr[this.header];
-			//console.log(tmp);
-
-
-
-			rows.sort((a, b) => {
-
-
-
-				if (this.cnt % 2 == 0) {
-
-					return d3.descending(a.value[tmp], b.value[tmp]);
-				}
-				else {
-					return d3.ascending(a.value[tmp], b.value[tmp]);
-				}
-
-			})
-
-
-
-            this.strange_sort = 0;
-
+			if (this.header == 5){
+				rows.sort((a, b) => {
+					if (this.cnt % 2 == 0) {
+						return d3.descending(a.value.Result.ranking, b.value.Result.ranking);
+					}
+					else {
+						return d3.ascending(a.value.Result.ranking, b.value.Result.ranking);
+					}
+				})
+			}
+			else{
+				var sort_arr = ["Wins", 'TotalGames', 'Losses', 'Goals Made', 'key']
+				var tmp = sort_arr[this.header];
+				rows.sort((a, b) => {
+					if (this.cnt % 2 == 0) {
+						return d3.descending(a.value[tmp], b.value[tmp]);
+					}
+					else {
+						return d3.ascending(a.value[tmp], b.value[tmp]);
+					}
+				})
+			}
 		}
 
 
@@ -385,14 +359,6 @@ class Table {
                 }
             });
 
-
-			//console.log(cells);
-
-
-
-
-
-
 		var colorScale = d3.scaleLinear()
             .domain([1, maxOverall])
             .interpolate(d3.interpolateHcl)
@@ -417,25 +383,6 @@ class Table {
 
         var bars = g.filter(d => d.vis != "goals");
 
-
-		bars.append("rect")
-            .attr("width", function(d){
-				return 75 / (maxOverall - 1) * d.value[0];
-				})
-            .attr("height", height)
-            .attr("fill", d => colorScale(d.value[0]));
-
-		bars.append("text")
-            .attr("x", function (d) {
-				return 75 / (maxOverall - 1) * d.value[0] - 4;
-				})
-            .attr("y", 13)
-            .attr("font-size", 12)
-            .attr("text-anchor", "end")
-            .attr("fill", "white")
-            .text(d => d.value[0]);
-
-		console.log(this.goalScale);
         g.filter(d => d.vis == "goals" && d.value[0] == d.value[1])
             .attr("class", d => d.type)
             .append("circle")
@@ -497,54 +444,19 @@ class Table {
         // ******* TODO: PART IV *******
 
         //Only update list for aggregate clicks, not game clicks
-        //console.log(i);
-        //console.log(this.selected);
-/*
-        var sort_arr = ["Wins", 'TotalGames', 'Losses', 'Goals Made', 'key']
-        var tmp = sort_arr[this.header];
 
-        this.tableElements = this.tableElements.sort((a, b) => {
+      	this.collapseList();
+        let data = this.tableElements[i];
 
-
-
-            if (this.cnt % 2 == 0) {
-
-                return d3.descending(a.value[tmp], b.value[tmp]);
-            }
-            else {
-                return d3.ascending(a.value[tmp], b.value[tmp]);
-            }
-
-        });
-
-        //console.log(11);
-        //console.log(this.tableElements);
-*/
-
-        var data = this.tableElements[i];
-        //console.log(i);
-        //console.log(data);
-        //console.log(this.selected);
-        if ((data.key == this.selected && this.strange_cnt == 0) || (this.strange_sort)) {
-
-            this.updateTable();
-            this.collapseList();
-            this.strange_cnt = 1;
-            return true;
-        }
-        this.strange_cnt = 0;
-        var games = data.value.games.map(g => {
-            return { key: 'x' + g.key, value: g.value, unique: g.key + "_" + data.key };
+        let games = data.value.games.map(g => {
+            return { key: 'x' + g.key, value: g.value, unique: g.key + "-" + data.key };
         })
 
         games.unshift(0);
-        games.unshift(i + 1); // выталкивает бразилию из списка
+        games.unshift(i + 1);
 
         this.tableElements.splice.apply(this.tableElements, games);
-
-        this.updateTable();
-        this.collapseList();
-
+        this.updateTable(false);
 	}
 
     /**
@@ -552,19 +464,12 @@ class Table {
      *
      */
     collapseList() {
-
-
-
-
         for (var i = 0; i < this.tableElements.length; i++) {
             var row = this.tableElements[i];
-
             if (row.value.type == 'game') {
                 this.tableElements.splice(i, 1);
                 i--;
             }
         }
     }
-
-
 }
