@@ -14,7 +14,6 @@ class Table {
 
         ///** Store all match data for the 2014 Fifa cup */
         this.teamData =  teamData;
-        //console.log(teamData);
 
         // ugly fix for sort function
         for (var i = 0; i < teamData.length; i++) {
@@ -26,7 +25,6 @@ class Table {
             }
 
         }
-        //console.log(teamData);
         //Default values for the Table Headers
         this.tableHeaders = ["Delta Goals", "Result", "Wins", "Losses", "TotalGames"];
 
@@ -267,9 +265,7 @@ class Table {
                     }
                 })
                 .on('mouseover', function (row) {
-                	if (row.value.type == 'aggregate'){
-			            t.tree.updateTree(row);
-			        }
+                	t.tree.updateTree(row);
 		        })
   				.attr('title', function(d) {
 					if (d.value.TotalGames == 3) {
@@ -298,7 +294,6 @@ class Table {
 
 
 		if (this.header != null && with_sort) {
-			console.log(with_sort);
 			this.collapseList();
 
 			if (this.header == 5){
@@ -383,14 +378,34 @@ class Table {
 
         var bars = g.filter(d => d.vis != "goals");
 
+		bars.append("rect")
+           .attr("width", function(d){
+           	if (d.value[0] == undefined || Array.isArray(d.value[0])) return 0;
+			return 75 / (maxOverall - 1) * d.value[0];
+			})
+           .attr("height", height)
+           .attr("fill", d => colorScale(d.value[0]));
+
+		bars.append("text")
+           .attr("x", function (d) {
+           	if (d.value[0] == undefined || Array.isArray(d.value[0])) return 0;
+			return 75 / (maxOverall - 1) * d.value[0] - 4;
+			})
+           .attr("y", 13)
+           .attr("font-size", 12)
+           .attr("text-anchor", "end")
+           .attr("fill", "white")
+           .text(d => d.value[0]);
+
+
         g.filter(d => d.vis == "goals" && d.value[0] == d.value[1])
-            .attr("class", d => d.type)
-            .append("circle")
-            .attr("class", "draw")
-			//.attr('cy', 11)
-			//.attr('r', 6)
-			//.attr('fill', 'rgb(128,128,128)')
-            .attr("cx", d => Math.round(this.goalScale(d.value[0] + 3)));
+        .attr("class", d => d.type)
+        .append("circle")
+        .attr("class", "draw")
+		//.attr('cy', 11)
+		//.attr('r', 6)
+		//.attr('fill', 'rgb(128,128,128)')
+        .attr("cx", d => Math.round(this.goalScale(d.value[0] + 3)));
 
         var goalRanges = g.filter(d => d.vis == "goals" && d.value[0] != d.value[1])
             .attr("class", d => d.type);
@@ -446,6 +461,7 @@ class Table {
         //Only update list for aggregate clicks, not game clicks
 
       	this.collapseList();
+        console.log(this.tableElements);
         let data = this.tableElements[i];
 
         let games = data.value.games.map(g => {
@@ -455,7 +471,9 @@ class Table {
         games.unshift(0);
         games.unshift(i + 1);
 
+        console.log(this.tableElements);
         this.tableElements.splice.apply(this.tableElements, games);
+        console.log(this.tableElements);
         this.updateTable(false);
 	}
 
